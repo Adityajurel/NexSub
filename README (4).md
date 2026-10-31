@@ -1,4 +1,4 @@
-# Brightloop Subscription Management System
+# NexSub Subscription Management System
 
 > One platform to run plans, subscriptions and recurring billing: from catalog setup to invoices, payments and revenue reporting.
 
