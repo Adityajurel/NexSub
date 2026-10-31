@@ -6,7 +6,7 @@
 
 ## The Problem
 
-NexSub is a unified subscription management platform designed to automate the complete subscription lifecycle for businesses like Brightloop Software.
+NexSub is a unified subscription management platform designed to automate the complete subscription lifecycle for businesses.
 
 It replaces spreadsheets, manual invoicing, and disconnected payment tracking with a centralized system that enables admins, staff, customers, and finance teams to manage subscriptions efficiently.
 
