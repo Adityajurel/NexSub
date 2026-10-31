@@ -1,4 +1,5 @@
 # NexSub – Intelligent Subscription Management System
+Video Link - https://drive.google.com/file/d/1fEDyrsUs6BugdT-Vga05vmFGLuqLBaIL/view?usp=drivesdk
 
 > One platform to run plans, subscriptions and recurring billing: from catalog setup to invoices, payments and revenue reporting.
 
