@@ -4,15 +4,55 @@ const Invoice = require('../../models/Invoice');
 const Subscription = require('../../models/Subscription');
 const Payment = require('../../models/Payment');
 const User = require('../../models/User');
+const { formatRetrievedContext, retrieveRelevantContext } = require('./ragService');
 
 let anthropicClient = null;
-if (env.AI_FEATURES_ENABLED && env.ANTHROPIC_API_KEY) {
+if (env.AI_FEATURES_ENABLED && env.AI_PROVIDER === 'anthropic' && env.ANTHROPIC_API_KEY) {
   try {
     anthropicClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   } catch (err) {
     console.warn('[AI Service] Failed to initialize Anthropic client:', err.message);
   }
 }
+
+const queryGemini = async (queryText, retrievedContext) => {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            {
+              text: `You are the NexSub Financial AI Assistant. Answer strictly from the retrieved context below. Never invent metrics or make assumptions. Cite the relevant source in square brackets. If the context does not answer the question, say so clearly.
+
+Retrieved context:
+${retrievedContext}`
+            }
+          ]
+        },
+        contents: [{ role: 'user', parts: [{ text: queryText }] }],
+        generationConfig: { maxOutputTokens: 600 }
+      })
+    }
+  );
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error?.message || `Gemini API returned HTTP ${response.status}`);
+  }
+
+  const answer = payload.candidates?.[0]?.content?.parts
+    ?.map((part) => part.text || '')
+    .join('')
+    .trim();
+  if (!answer) {
+    throw new Error('Gemini API returned an empty response');
+  }
+
+  return answer;
+};
 
 /**
  * Natural language inquiry for financial data.
@@ -44,42 +84,69 @@ const queryFinancialAssistant = async (queryText) => {
     overdueInvoicesTotal: `Rs. ${overdueTotal.toLocaleString('en-IN')}`,
     date: new Date().toLocaleDateString()
   };
+  const retrievedChunks = retrieveRelevantContext(queryText, contextData);
+  const retrievedContext = formatRetrievedContext(retrievedChunks);
+  const ragMetadata = {
+    pipeline: 'live-metrics-retrieval',
+    sources: retrievedChunks.map((chunk) => chunk.source),
+    chunksRetrieved: retrievedChunks.length
+  };
 
   if (anthropicClient) {
     try {
       const response = await anthropicClient.messages.create({
         model: 'claude-3-5-sonnet-20241022',
         max_tokens: 600,
-        system: `You are the NexSub Financial AI Assistant. Answer business and financial questions strictly using the provided context summary. Never invent unauthorized metrics. Context: ${JSON.stringify(contextData)}`,
+        system: `You are the NexSub Financial AI Assistant. Answer strictly from the retrieved context below. Never invent metrics or make assumptions. Cite the relevant source in square brackets, such as [Live overdue invoice metrics]. If the context does not answer the question, say so clearly.
+
+Retrieved context:
+${retrievedContext}`,
         messages: [{ role: 'user', content: queryText }]
       });
 
       return {
         source: 'Claude 3.5 Sonnet',
         answer: response.content[0].text,
-        metricsUsed: contextData
+        metricsUsed: contextData,
+        rag: ragMetadata
       };
     } catch (err) {
       console.warn('[AI Service] Claude API error, using smart fallback:', err.message);
+    }
+
+    if (env.AI_FEATURES_ENABLED && env.AI_PROVIDER === 'gemini' && env.GEMINI_API_KEY) {
+      try {
+        const answer = await queryGemini(queryText, retrievedContext);
+        return {
+          source: `Google Gemini (${env.GEMINI_MODEL})`,
+          answer,
+          metricsUsed: contextData,
+          rag: ragMetadata
+        };
+      } catch (err) {
+        console.warn('[AI Service] Gemini API error, using smart fallback:', err.message);
+      }
     }
   }
 
   // Intelligent local fallback
   const queryLower = queryText.toLowerCase();
-  let answer = `Based on current NexSub records: Total revenue collected is ${contextData.totalRevenueCollected} across ${contextData.activeSubscriptions} active subscriptions.`;
+  const primarySource = `[${retrievedChunks[0].source}]`;
+  let answer = `${primarySource} Based on current NexSub records: Total revenue collected is ${contextData.totalRevenueCollected} across ${contextData.activeSubscriptions} active subscriptions.`;
 
   if (queryLower.includes('overdue') || queryLower.includes('pending') || queryLower.includes('outstanding')) {
-    answer = `There are currently ${contextData.overdueInvoicesCount} overdue invoices totaling ${contextData.overdueInvoicesTotal}. Action is recommended to initiate dunning.`;
+    answer = `${primarySource} There are currently ${contextData.overdueInvoicesCount} overdue invoices totaling ${contextData.overdueInvoicesTotal}. Action is recommended to initiate dunning.`;
   } else if (queryLower.includes('customer') || queryLower.includes('growth')) {
-    answer = `NexSub currently manages ${contextData.totalRegisteredCustomers} registered customer accounts with ${contextData.activeSubscriptions} active recurring billing subscriptions.`;
+    answer = `${primarySource} NexSub currently manages ${contextData.totalRegisteredCustomers} registered customer accounts with ${contextData.activeSubscriptions} active recurring billing subscriptions.`;
   } else if (queryLower.includes('revenue') || queryLower.includes('collected') || queryLower.includes('money')) {
-    answer = `Total collected revenue stands at ${contextData.totalRevenueCollected}. Current outstanding/overdue amount is ${contextData.overdueInvoicesTotal}.`;
+    answer = `${primarySource} Total collected revenue stands at ${contextData.totalRevenueCollected}. Current outstanding/overdue amount is ${contextData.overdueInvoicesTotal}.`;
   }
 
   return {
     source: 'NexSub Embedded Intelligence Engine',
     answer,
-    metricsUsed: contextData
+    metricsUsed: contextData,
+    rag: ragMetadata
   };
 };
 

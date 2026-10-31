@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { BrandLogo } from '../common/BrandLogo';
 import {
   LayoutDashboard,
   Package,
@@ -10,7 +11,6 @@ import {
   Receipt,
   CreditCard,
   LogOut,
-  Layers,
   User,
   Settings,
   Percent,
@@ -65,8 +65,8 @@ export const Sidebar = () => {
           className={({ isActive }) =>
             `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
               isActive
-                ? 'bg-slate-800 text-sky-400 border border-slate-700/60 shadow-xs'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-[#f5c875] text-[#171717] border border-[#f8d28d] shadow-sm'
+                : 'text-[#b8b0a4] hover:text-white hover:bg-[#292724]'
             }`
           }
         >
@@ -78,15 +78,13 @@ export const Sidebar = () => {
   );
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800 select-none">
+    <aside className="w-64 bg-[#171717] text-[#d8d1c5] flex flex-col shrink-0 border-r border-[#2b2926] select-none">
       {/* Brand Header */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-800 gap-3">
-        <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center text-white font-bold shadow-sm">
-          <Layers className="w-5 h-5" />
-        </div>
+      <div className="h-16 flex items-center px-6 border-b border-[#2b2926] gap-3">
+        <BrandLogo className="w-9 h-9 rounded-lg bg-white shadow-sm" />
         <div>
-          <span className="font-bold text-white text-base tracking-tight">NexSub</span>
-          <span className="block text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
+          <span className="font-black text-white text-base tracking-tight">NexSub</span>
+          <span className="block text-[10px] text-[#a1988b] uppercase tracking-widest font-semibold">
             Subscription OS
           </span>
         </div>
@@ -94,7 +92,7 @@ export const Sidebar = () => {
 
       {/* Navigation links */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-[#a1988b]">
           {role === 'Admin' ? 'Main Menu' : role === 'Staff' ? 'Staff Console' : 'Customer Portal'}
         </div>
 
@@ -104,10 +102,10 @@ export const Sidebar = () => {
 
         {/* Admin Secondary Configuration Collapsible */}
         {role === 'Admin' && (
-          <div className="pt-3 mt-3 border-t border-slate-800/80">
+          <div className="pt-3 mt-3 border-t border-[#2b2926]">
             <button
               onClick={() => setShowConfig(!showConfig)}
-              className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200 uppercase tracking-wider rounded-lg hover:bg-slate-800/40 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-[#a1988b] hover:text-white uppercase tracking-wider rounded-lg hover:bg-[#292724] transition-colors"
             >
               <span>Settings & Rules</span>
               {showConfig ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -122,16 +120,16 @@ export const Sidebar = () => {
       </div>
 
       {/* User Footer */}
-      <div className="p-3 border-t border-slate-800 bg-slate-950/40">
-        <div className="flex items-center justify-between p-2 rounded-lg bg-slate-800/40 border border-slate-800">
+      <div className="p-3 border-t border-[#2b2926] bg-[#111111]/50">
+        <div className="flex items-center justify-between p-2 rounded-xl bg-[#292724] border border-[#3a3631]">
           <div className="truncate mr-2">
             <p className="text-xs font-semibold text-white truncate">{user?.name}</p>
-            <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
+            <p className="text-[11px] text-[#a1988b] truncate">{user?.email}</p>
           </div>
           <button
             onClick={logout}
             title="Log out"
-            className="p-1.5 rounded-md text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-md text-[#a1988b] hover:text-[#f5c875] hover:bg-[#171717] transition-colors"
           >
             <LogOut className="w-4 h-4" />
           </button>

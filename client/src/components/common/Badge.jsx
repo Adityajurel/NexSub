@@ -32,9 +32,9 @@ const statusStyles = {
   dry_run: 'bg-indigo-50 text-indigo-700 border-indigo-200',
 
   // Role badges
-  admin: 'bg-purple-50 text-purple-700 border-purple-200 font-medium',
-  staff: 'bg-blue-50 text-blue-700 border-blue-200 font-medium',
-  customer: 'bg-slate-100 text-slate-700 border-slate-200 font-medium'
+  admin: 'bg-[#f3eaff] text-[#6d42a5] border-[#dfc9fa] font-bold',
+  staff: 'bg-[#e9f4ff] text-[#28658f] border-[#c8e4fa] font-bold',
+  customer: 'bg-[#fff4d8] text-[#946b1f] border-[#f1d99c] font-bold'
 };
 
 export const Badge = ({ status, children, className = '' }) => {

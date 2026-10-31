@@ -2,9 +2,9 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 const variants = {
-  primary: 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 border border-transparent shadow-sm',
-  secondary: 'bg-white text-slate-700 hover:bg-slate-50 focus:ring-slate-300 border border-slate-200 shadow-sm',
-  brand: 'bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 border border-transparent shadow-sm',
+  primary: 'bg-[#f5c875] text-[#171717] hover:bg-[#f8d28d] focus:ring-[#d9a94f] border border-[#e7b962] shadow-sm',
+  secondary: 'bg-[#fffdf9] text-[#3d3934] hover:bg-[#f7f1e5] focus:ring-[#d9cdb9] border border-[#ded7cb] shadow-sm',
+  brand: 'bg-[#171717] text-white hover:bg-[#302d29] focus:ring-[#f5c875] border border-transparent shadow-sm',
   danger: 'bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500 border border-transparent shadow-sm',
   ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-transparent',
   outline: 'bg-transparent text-slate-700 border border-slate-300 hover:bg-slate-50'

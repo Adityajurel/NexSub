@@ -1,30 +1,19 @@
-# NexSub Subscription Management System
+# NexSub – Intelligent Subscription Management System
 
 > One platform to run plans, subscriptions and recurring billing: from catalog setup to invoices, payments and revenue reporting.
-
-
 
 ## The Problem
 
 NexSub is a unified subscription management platform designed to automate the complete subscription lifecycle for businesses.
-
 It replaces spreadsheets, manual invoicing, and disconnected payment tracking with a centralized system that enables admins, staff, customers, and finance teams to manage subscriptions efficiently.
 
 ## The Solution
 
-# NexSub – Subscription Management System
-
 NexSub is a unified subscription management platform designed to simplify and automate the complete subscription lifecycle for businesses. It enables admins to manage products, plans, pricing, variants, taxes, and discounts while allowing staff to handle customer subscriptions, quotations, invoices, and payments. The system automates recurring billing, invoice generation, subscription renewals, and payment tracking, reducing manual errors and missed renewals. It also provides a customer self-service portal where users can manage their subscriptions and view invoices, along with a centralized analytics dashboard for tracking active subscriptions, revenue, outstanding payments, and overdue invoices. Built with a scalable architecture, NexSub aims to streamline subscription operations, improve financial visibility, and deliver an efficient billing experience for businesses.
-
-
-
-Add a concise feature listClarify NexSub’s target users
-
 
 ```
 Catalog -> Quotation -> Subscription -> Auto-Invoice -> Payment -> Revenue Reporting
 ```
-
 
 ## Key Features
 
@@ -43,7 +32,7 @@ Catalog -> Quotation -> Subscription -> Auto-Invoice -> Payment -> Revenue Repor
 **Differentiators**
 - **Idempotent billing:** a unique compound index on `(subscription, periodStart)` guarantees nothing is billed twice; catch-up logic guarantees nothing is skipped
 - **Billing Run console** with dry-run preview and per-subscription result log
-- **Demo Clock** to simulate a whole billing month in minutes
+- **Demo Clock** to simulate a whole billing month in minutes without changing system time
 - **Margin guard** warns when a discount drops below the cost-based floor
 - **Price explainer** shows how every invoice line was calculated
 - **Optional AI (Claude API):** natural-language report queries and dunning email drafts, behind a feature flag; billing works with AI off
@@ -56,7 +45,9 @@ flowchart TD
     B --> C[(MongoDB<br/>Mongoose)]
     B --> D[Scheduler<br/>node-cron: billing, snapshots]
     D --> C
-    B -.optional.-> E[Claude API<br/>NL query, dunning drafts]
+    B --> F[Live-metrics RAG<br/>retrieve relevant billing facts]
+    F -.optional.-> E[Claude API<br/>grounded chat, dunning drafts]
+    B -.fallback.-> G[Embedded response engine<br/>works without Claude]
 ```
 
 **Billing run flow**
@@ -65,7 +56,7 @@ flowchart TD
 Cron job or "Run now"
   -> atomically claim ACTIVE subscriptions with nextBillingDate <= run date
      (findOneAndUpdate sets a short lock lease, so parallel runs never grab the same one)
-  -> per subscription, in one Mongo transaction:
+  -> per subscription, in one transaction/session:
        price -> discount -> tax (pricing engine)
        insert invoice (unique on subscription + periodStart)
        increment discount usage (guarded: usedCount < usageLimit)
@@ -78,16 +69,20 @@ Cron job or "Run now"
 
 | Technology | Use |
 |---|---|
-| React.js + Vite | Frontend |
-| Node.js | Backend runtime |
-| Express.js | REST API |
-| MongoDB + Mongoose | Database |
-| JWT | Authentication |
-| bcrypt | Password hashing |
-| Tailwind CSS | UI styling |
-| Recharts | Dashboard charts |
-
-Small supporting libraries: `zod` (validation), `node-cron` (scheduler), `nodemailer` (reset links and invoice emails), `pdfkit` (invoice PDFs), `helmet`, `cors`, `express-rate-limit`, `@anthropic-ai/sdk` (optional AI).
+| React.js + Vite | Frontend SPA |
+| Tailwind CSS | Premium UI Styling |
+| Recharts | Interactive Financial Analytics |
+| Lucide React | Modern Iconography |
+| Node.js + Express.js | Backend REST API |
+| MongoDB + Mongoose | Database & Aggregations |
+| JWT + bcrypt | Secure Authentication |
+| Zod | Request & Data Validation |
+| PDFKit | Invoice & Quotation PDF Generation |
+| Nodemailer | Transactional Emails & Password Reset |
+| node-cron | Automated Billing Engine Scheduler |
+| Helmet, CORS, Rate Limit | API Security Hardening |
+| Anthropic Claude SDK / Google Gemini API | Optional AI Assistant Integration |
+| Deterministic RAG pipeline | Retrieves live billing metrics before AI generation, with a local fallback |
 
 ## Project Structure
 
@@ -96,7 +91,7 @@ Small supporting libraries: `zod` (validation), `node-cron` (scheduler), `nodema
 ├── client/                     # React + Vite
 │   └── src/
 │       ├── pages/              # admin/, staff/, portal/, auth/
-│       ├── components/         # tables, status chips, charts (Recharts)
+│       ├── components/         # tables, status chips, charts, modals
 │       ├── hooks/ api/ routes/ # data fetching, axios client, role-guarded routes
 │       └── main.jsx
 ├── server/
@@ -113,30 +108,36 @@ Small supporting libraries: `zod` (validation), `node-cron` (scheduler), `nodema
 └── README.md
 ```
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- MongoDB 7+ running as a **replica set** (needed for transactions). MongoDB Atlas free tier works out of the box; the included `docker-compose.yml` starts a single-node replica set locally.
-
-
-
-## Roadmap
+## Roadmap & Checklist
 
 - [x] Auth, RBAC, staff management
 - [x] Catalog: products, variants, plans
 - [x] Taxes, discounts, quotation templates
 - [x] Subscription and invoice state machines
-- [x] Idempotent billing run
+- [x] Idempotent billing run engine
+- [x] Billing Run Console & Dry Run mode
 - [x] Payments and overdue tracking
+- [x] Smart payment recovery (Dunning & retries)
 - [x] Finance dashboard and customer portal
-- [ ] Mid-cycle proration on seat changes
-- [ ] Online payment gateway (test mode)
-- [ ] Usage-based billing lines
-- [ ] Multi-currency
+- [x] Demo Clock simulation engine
+- [x] Optional AI reports and dunning generation
+- [x] RAG-grounded AI chat over live subscription, revenue, customer and overdue-invoice metrics
+- [x] Docker & CI/CD workflow
 
-> Tick the boxes to match what is actually built before submitting.
+### Gemini configuration
+
+Copy the relevant settings from `.env.example` into a local `.env` file and add your
+Gemini key without committing it:
+
+```env
+AI_FEATURES_ENABLED=true
+AI_PROVIDER=gemini
+GEMINI_MODEL=gemini-2.0-flash
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+The key is used only by the server. If Gemini is unavailable or disabled, the
+RAG-grounded embedded response engine remains available.
 
 ## Assumptions
 
@@ -147,11 +148,16 @@ Small supporting libraries: `zod` (validation), `node-cron` (scheduler), `nodema
 5. Partial payments allowed; invoice is `Paid` only when `amountDue = 0`.
 6. Pause stops invoice generation; resume re-anchors the next billing date.
 
-## Team
+## Demo Credentials
 
-| Name | Role |
-|---|---|
-| `<Aditya Jurel>` | Backend: auth, RBAC, catalog, deployment |
-| `<Anupam Dwivedi>` | Backend: pricing engine, state machines, billing run, payments |
-| `<Avichal Bajpai>` | Frontend: admin and staff consoles |
+- **Admin**: `admin@nexsub.com` / `Admin@12345`
+- **Staff**: `staff@nexsub.com` / `Staff@12345`
+- **Customer**: `acme@example.com` / `Customer@12345` (and 20+ other seeded customers)
 
+## Team Responsibilities
+
+| Name | Role | Responsibilities |
+|---|---|---|
+| **Aditya Jurel** | Backend Architect | Authentication, RBAC, Catalog, Deployment & Docker |
+| **Anupam Dwivedi** | Backend Engineer | Pricing Engine, State Machines, Idempotent Billing Runs & Payments |
+| **Avichal Bajpai** | Frontend & UI/UX | Admin Dashboard, Staff Consoles, Customer Portal & Demo Clock |

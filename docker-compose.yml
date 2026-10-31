@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: nexsub_mongodb
+    restart: always
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        openssl rand -base64 756 > /tmp/mongodb-keyfile
+        chmod 400 /tmp/mongodb-keyfile
+        chown 999:999 /tmp/mongodb-keyfile
+        mongod --bind_ip_all --replSet rs0 &
+        MONGOPID=$$!
+        until mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; do
+          sleep 1
+        done
+        mongosh --eval 'try { rs.initiate({_id: "rs0", members: [{_id: 0, host: "mongodb:27017"}]}) } catch(e) { rs.status() }'
+        wait $$MONGOPID
+    healthcheck:
+      test: mongosh --eval "rs.status().ok" | grep 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: nexsub_server
+    restart: always
+    ports:
+      - '5000:5000'
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/nexsub?replicaSet=rs0
+      - JWT_SECRET=nexsub_hackathon_super_secure_jwt_secret_key_2026
+      - JWT_EXPIRES_IN=7d
+      - CLIENT_URL=http://localhost
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: nexsub_client
+    restart: always
+    ports:
+      - '80:80'
+    depends_on:
+      - server
+
+volumes:
+  mongo_data:

@@ -16,10 +16,10 @@ const validate = (schema) => (req, res, next) => {
         success: false,
         message: 'Validation failed',
         errors: formattedErrors
-              });
+      });
     }
 
-    // Replace
+    // Replace with sanitized data
     req.body = parsed.data.body || req.body;
     req.query = parsed.data.query || req.query;
     req.params = parsed.data.params || req.params;

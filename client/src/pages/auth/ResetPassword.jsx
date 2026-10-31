@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../api/client';
 import { Button } from '../../components/common/Button';
-import { Layers, CheckCircle, AlertCircle, Lock } from 'lucide-react';
+import { BrandLogo } from '../../components/common/BrandLogo';
+import { CheckCircle, AlertCircle, Lock } from 'lucide-react';
 
 export const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -46,8 +47,8 @@ export const ResetPassword = () => {
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-6">
-          <div className="inline-flex w-12 h-12 rounded-xl bg-slate-900 items-center justify-center text-white font-bold shadow-md mb-3">
-            <Layers className="w-6 h-6 text-sky-400" />
+          <div className="inline-flex w-12 h-12 rounded-xl bg-white items-center justify-center font-bold shadow-md mb-3">
+            <BrandLogo className="h-12 w-12 rounded-xl bg-white" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Set New Password</h2>
           <p className="text-sm text-slate-500 mt-1">Create a secure new password for your account</p>
